@@ -510,6 +510,7 @@
 
         let selectedFile = null;
         let uploadedFilename = null;
+        let isUploading = false;
 
         // Update duration display
         shortsDuration.addEventListener('input', (e) => {
@@ -522,6 +523,7 @@
         // File input change
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
+            console.log('File selected:', file);
             if (file) {
                 handleFileSelect(file);
             }
@@ -541,12 +543,14 @@
             e.preventDefault();
             uploadArea.classList.remove('dragover');
             const file = e.dataTransfer.files[0];
+            console.log('File dropped:', file);
             if (file) {
                 handleFileSelect(file);
             }
         });
 
-        function handleFileSelect(file) {
+        async function handleFileSelect(file) {
+            console.log('Handling file select:', file.name);
             selectedFile = file;
             uploadArea.style.display = 'none';
             fileInfo.classList.add('active');
@@ -554,7 +558,9 @@
             fileSize.textContent = `Size: ${formatFileSize(file.size)}`;
             controls.classList.add('active');
             buttonGroup.style.display = 'flex';
-            uploadFile();
+            
+            // Upload the file
+            await uploadFile(file);
         }
 
         function formatFileSize(bytes) {
@@ -565,33 +571,55 @@
             return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
         }
 
-        async function uploadFile() {
+        async function uploadFile(file) {
+            if (isUploading) {
+                console.log('Upload already in progress');
+                return;
+            }
+
+            isUploading = true;
+            console.log('Starting upload for:', file.name);
+            
             const formData = new FormData();
-            formData.append('file', selectedFile);
+            formData.append('file', file);
 
             try {
+                console.log('Sending upload request to /api/upload');
                 const response = await fetch('/api/upload', {
                     method: 'POST',
                     body: formData
                 });
 
+                console.log('Upload response status:', response.status);
                 const data = await response.json();
+                console.log('Upload response data:', data);
 
                 if (!response.ok) {
-                    showMessage(data.error || 'Upload failed', 'error');
+                    const errorMsg = data.error || `Upload failed with status ${response.status}`;
+                    console.error('Upload error:', errorMsg);
+                    showMessage(errorMsg, 'error');
+                    resetUpload();
                     return;
                 }
 
                 uploadedFilename = data.filename;
-                showMessage('File uploaded successfully!', 'success');
+                console.log('File uploaded successfully:', uploadedFilename);
+                showMessage('✅ File uploaded successfully! Ready to process.', 'success');
             } catch (error) {
-                showMessage('Error uploading file: ' + error.message, 'error');
+                console.error('Upload exception:', error);
+                showMessage('❌ Error uploading file: ' + error.message, 'error');
+                resetUpload();
+            } finally {
+                isUploading = false;
             }
         }
 
         processBtn.addEventListener('click', async () => {
+            console.log('Process button clicked');
+            console.log('Uploaded filename:', uploadedFilename);
+
             if (!uploadedFilename) {
-                showMessage('Please upload a file first', 'error');
+                showMessage('❌ Please upload a file first', 'error');
                 return;
             }
 
@@ -600,6 +628,7 @@
             resultsSection.classList.remove('active');
 
             try {
+                console.log('Starting video processing');
                 const response = await fetch('/api/process', {
                     method: 'POST',
                     headers: {
@@ -613,10 +642,14 @@
                     })
                 });
 
+                console.log('Process response status:', response.status);
                 const data = await response.json();
+                console.log('Process response data:', data);
 
                 if (!response.ok) {
-                    showMessage(data.error || 'Processing failed', 'error');
+                    const errorMsg = data.error || 'Processing failed';
+                    console.error('Process error:', errorMsg);
+                    showMessage(errorMsg, 'error');
                     return;
                 }
 
@@ -624,9 +657,10 @@
                 progressText.textContent = '100%';
 
                 displayResults(data.shorts);
-                showMessage(`Successfully generated ${data.count} shorts!`, 'success');
+                showMessage(`✅ Successfully generated ${data.count} shorts!`, 'success');
             } catch (error) {
-                showMessage('Error processing video: ' + error.message, 'error');
+                console.error('Process exception:', error);
+                showMessage('❌ Error processing video: ' + error.message, 'error');
             } finally {
                 processBtn.disabled = false;
                 progressSection.classList.remove('active');
@@ -657,6 +691,11 @@
         }
 
         clearBtn.addEventListener('click', () => {
+            console.log('Clear button clicked');
+            resetUpload();
+        });
+
+        function resetUpload() {
             selectedFile = null;
             uploadedFilename = null;
             fileInput.value = '';
@@ -670,9 +709,11 @@
             progressText.textContent = '0%';
             shortsGrid.innerHTML = '';
             messageDiv.classList.remove('active');
-        });
+            isUploading = false;
+        }
 
         function showMessage(message, type) {
+            console.log(`Message [${type}]:`, message);
             messageDiv.textContent = message;
             messageDiv.className = `message active ${type}`;
             setTimeout(() => {
@@ -682,19 +723,18 @@
             }, 5000);
         }
 
-        // Simulate progress
-        let currentProgress = 0;
-        const progressInterval = setInterval(() => {
-            if (progressSection.classList.contains('active')) {
-                if (currentProgress < 90) {
-                    currentProgress += Math.random() * 30;
-                    progressFill.style.width = Math.min(currentProgress, 90) + '%';
-                    progressText.textContent = Math.round(Math.min(currentProgress, 90)) + '%';
-                }
-            } else {
-                currentProgress = 0;
+        // Test connection on load
+        window.addEventListener('load', async () => {
+            console.log('Page loaded, testing server connection');
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                console.log('Server status:', data);
+            } catch (error) {
+                console.error('Server connection failed:', error);
+                showMessage('⚠️ Server connection failed. Please refresh the page.', 'error');
             }
-        }, 500);
+        });
     </script>
 </body>
 </html>
