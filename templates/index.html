@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Shorts Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .upload-section {
+            margin-bottom: 40px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+
+        .upload-area:hover {
+            background: #f0f2ff;
+            border-color: #764ba2;
+        }
+
+        .upload-area.dragover {
+            background: #e8eaff;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+
+        .upload-area i {
+            font-size: 3em;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #333;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .upload-subtext {
+            color: #999;
+            font-size: 0.95em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .controls {
+            background: #f8f9ff;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .controls.active {
+            display: block;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        input[type="range"],
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="range"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .file-info {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .file-info.active {
+            display: block;
+        }
+
+        .file-name {
+            color: #2e7d32;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .file-size {
+            color: #558b2f;
+            font-size: 0.9em;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-process {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-process:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-process:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+        }
+
+        .progress-section {
+            display: none;
+            margin: 30px 0;
+        }
+
+        .progress-section.active {
+            display: block;
+        }
+
+        .progress-label {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .progress-text {
+            color: #666;
+            font-size: 0.9em;
+            text-align: right;
+        }
+
+        .results-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .results-title {
+            color: #333;
+            font-weight: 700;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        .shorts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .short-item {
+            background: #f5f5f5;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .short-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .short-preview {
+            width: 100%;
+            aspect-ratio: 9/16;
+            background: #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 3em;
+        }
+
+        .short-info {
+            padding: 12px;
+        }
+
+        .short-name {
+            color: #333;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .short-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-download {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.8em;
+            background: #667eea;
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: background 0.3s;
+        }
+
+        .btn-download:hover {
+            background: #764ba2;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .message.active {
+            display: block;
+        }
+
+        .message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #4caf50;
+        }
+
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #f44336;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .upload-area {
+                padding: 30px 20px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .shorts-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Video Shorts Generator</h1>
+        <p class="subtitle">Transform your videos into viral social media shorts</p>
+
+        <div id="message" class="message"></div>
+
+        <!-- File Upload Section -->
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div style="font-size: 3em; margin-bottom: 15px;">📹</div>
+                <div class="upload-text">Drag and drop your video here</div>
+                <div class="upload-subtext">or click to select a file</div>
+                <div class="upload-subtext" style="font-size: 0.85em; margin-top: 10px;">
+                    Supported: MP4, MOV, AVI, WebM, MKV (Max 5GB)
+                </div>
+            </div>
+            <input type="file" id="fileInput" accept=".mp4,.mov,.avi,.webm,.mkv,.flv,.wmv">
+        </div>
+
+        <!-- File Info -->
+        <div class="file-info" id="fileInfo">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-size" id="fileSize"></div>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="controls" id="controls">
+            <div class="control-group">
+                <label for="shortsDuration">Shorts Duration (seconds)</label>
+                <input type="range" id="shortsDuration" min="15" max="60" value="30" step="5">
+                <div style="text-align: right; color: #999; font-size: 0.9em; margin-top: 5px;">
+                    <span id="durationDisplay">30</span>s
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Processing Options</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="sceneDetection" checked>
+                        Scene Detection
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="highlightDetection" checked>
+                        Highlight Detection
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div class="progress-section" id="progressSection">
+            <div class="progress-label">
+                <span class="spinner loading"></span>Processing your video...
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">0%</div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="button-group" id="buttonGroup" style="display: none;">
+            <button class="btn-process" id="processBtn">Generate Shorts</button>
+            <button class="btn-clear" id="clearBtn">Clear</button>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection">
+            <div class="results-title">Generated Shorts</div>
+            <div class="shorts-grid" id="shortsGrid"></div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const controls = document.getElementById('controls');
+        const buttonGroup = document.getElementById('buttonGroup');
+        const processBtn = document.getElementById('processBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const progressSection = document.getElementById('progressSection');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const resultsSection = document.getElementById('resultsSection');
+        const shortsGrid = document.getElementById('shortsGrid');
+        const messageDiv = document.getElementById('message');
+        const shortsDuration = document.getElementById('shortsDuration');
+        const durationDisplay = document.getElementById('durationDisplay');
+        const sceneDetection = document.getElementById('sceneDetection');
+        const highlightDetection = document.getElementById('highlightDetection');
+
+        let selectedFile = null;
+        let uploadedFilename = null;
+
+        // Update duration display
+        shortsDuration.addEventListener('input', (e) => {
+            durationDisplay.textContent = e.target.value;
+        });
+
+        // Upload area click
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFileSelect(file);
+            }
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                handleFileSelect(file);
+            }
+        });
+
+        function handleFileSelect(file) {
+            selectedFile = file;
+            uploadArea.style.display = 'none';
+            fileInfo.classList.add('active');
+            fileName.textContent = `📄 ${file.name}`;
+            fileSize.textContent = `Size: ${formatFileSize(file.size)}`;
+            controls.classList.add('active');
+            buttonGroup.style.display = 'flex';
+            uploadFile();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        async function uploadFile() {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showMessage(data.error || 'Upload failed', 'error');
+                    return;
+                }
+
+                uploadedFilename = data.filename;
+                showMessage('File uploaded successfully!', 'success');
+            } catch (error) {
+                showMessage('Error uploading file: ' + error.message, 'error');
+            }
+        }
+
+        processBtn.addEventListener('click', async () => {
+            if (!uploadedFilename) {
+                showMessage('Please upload a file first', 'error');
+                return;
+            }
+
+            processBtn.disabled = true;
+            progressSection.classList.add('active');
+            resultsSection.classList.remove('active');
+
+            try {
+                const response = await fetch('/api/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        filename: uploadedFilename,
+                        shorts_duration: parseInt(shortsDuration.value),
+                        scene_detection: sceneDetection.checked,
+                        highlight_detection: highlightDetection.checked
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showMessage(data.error || 'Processing failed', 'error');
+                    return;
+                }
+
+                progressFill.style.width = '100%';
+                progressText.textContent = '100%';
+
+                displayResults(data.shorts);
+                showMessage(`Successfully generated ${data.count} shorts!`, 'success');
+            } catch (error) {
+                showMessage('Error processing video: ' + error.message, 'error');
+            } finally {
+                processBtn.disabled = false;
+                progressSection.classList.remove('active');
+            }
+        });
+
+        function displayResults(shorts) {
+            shortsGrid.innerHTML = '';
+
+            shorts.forEach((short, index) => {
+                const shortItem = document.createElement('div');
+                shortItem.className = 'short-item';
+                shortItem.innerHTML = `
+                    <div class="short-preview">🎥</div>
+                    <div class="short-info">
+                        <div class="short-name">Short #${index + 1}</div>
+                        <div class="short-actions">
+                            <a href="/api/download/${short}" class="btn-download" download>
+                                ⬇️ Download
+                            </a>
+                        </div>
+                    </div>
+                `;
+                shortsGrid.appendChild(shortItem);
+            });
+
+            resultsSection.classList.add('active');
+        }
+
+        clearBtn.addEventListener('click', () => {
+            selectedFile = null;
+            uploadedFilename = null;
+            fileInput.value = '';
+            uploadArea.style.display = 'block';
+            fileInfo.classList.remove('active');
+            controls.classList.remove('active');
+            buttonGroup.style.display = 'none';
+            progressSection.classList.remove('active');
+            resultsSection.classList.remove('active');
+            progressFill.style.width = '0%';
+            progressText.textContent = '0%';
+            shortsGrid.innerHTML = '';
+            messageDiv.classList.remove('active');
+        });
+
+        function showMessage(message, type) {
+            messageDiv.textContent = message;
+            messageDiv.className = `message active ${type}`;
+            setTimeout(() => {
+                if (messageDiv.classList.contains('active') && !progressSection.classList.contains('active')) {
+                    messageDiv.classList.remove('active');
+                }
+            }, 5000);
+        }
+
+        // Simulate progress
+        let currentProgress = 0;
+        const progressInterval = setInterval(() => {
+            if (progressSection.classList.contains('active')) {
+                if (currentProgress < 90) {
+                    currentProgress += Math.random() * 30;
+                    progressFill.style.width = Math.min(currentProgress, 90) + '%';
+                    progressText.textContent = Math.round(Math.min(currentProgress, 90)) + '%';
+                }
+            } else {
+                currentProgress = 0;
+            }
+        }, 500);
+    </script>
+</body>
+</html>
