@@ -8,6 +8,8 @@ node_modules/
 __pycache__/
 *.egg-info/
 .Python
+venv/
+env/
 
 # Build
 dist/
@@ -20,15 +22,13 @@ build/
 *.swp
 *.swo
 *~
-
-# OS
 .DS_Store
-Thumbs.db
 
 # Logs
 logs/
 *.log
 npm-debug.log*
+yarn-debug.log*
 
 # Uploads & temp
 uploads/
@@ -38,3 +38,5 @@ temp/
 # Testing
 .coverage/
 .pytest_cache/
+.next/
+out/
