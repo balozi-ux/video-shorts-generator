@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: video-shorts-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+
+  backend:
+    build: ./backend
+    container_name: video-shorts-backend
+    ports:
+      - "3001:3001"
+    depends_on:
+      - mongodb
+      - ai-service
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/video-shorts
+      AI_SERVICE_URL: http://ai-service:5000
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+    volumes:
+      - ./backend/src:/app/src
+      - uploads:/app/uploads
+    command: npm run dev
+
+  frontend:
+    build: ./frontend
+    container_name: video-shorts-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      REACT_APP_API_URL: http://localhost:3001
+    volumes:
+      - ./frontend/src:/app/src
+
+  ai-service:
+    build: ./ai-service
+    container_name: video-shorts-ai
+    ports:
+      - "5000:5000"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      MODEL: gpt-4-vision
+    volumes:
+      - ./ai-service:/app
+      - uploads:/app/uploads
+
+volumes:
+  mongodb_data:
+  uploads:
